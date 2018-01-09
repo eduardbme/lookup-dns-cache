@@ -1,0 +1,22 @@
+{
+  "name": "lookup-dns-cache",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "test": "./node_modules/mocha/bin/mocha --recursive tests"
+  },
+  "dependencies": {
+    "async": "^2.6.0",
+    "global": "^4.3.2",
+    "lodash": "^4.17.4",
+    "rr": "^0.1.0"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "mocha": "^4.1.0",
+    "prettier": "^1.9.2",
+    "proxyquire": "^1.8.0",
+    "sinon": "^4.1.4"
+  }
+}
