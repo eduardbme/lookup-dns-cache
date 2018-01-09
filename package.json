@@ -1,8 +1,8 @@
 {
   "name": "lookup-dns-cache",
   "version": "1.0.0",
+  "description": "An implementation to speed up the nodejs `dns.lookup` method by avoiding thread pool and using resolve4/resolve6 with DNS TTL values",
   "main": "index.js",
-  "license": "MIT",
   "scripts": {
     "test": "./node_modules/mocha/bin/mocha --recursive tests"
   },
@@ -18,5 +18,24 @@
     "prettier": "^1.9.2",
     "proxyquire": "^1.8.0",
     "sinon": "^4.1.4"
-  }
+  },
+  "author": {
+    "name": "Eduard",
+    "email": "eduardbcom@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eduardbcom/lookup-dns-cache"
+  },
+  "keywords": [
+    "dns",
+    "lookup",
+    "resolve4",
+    "resolve6",
+    "cache",
+    "ipv4",
+    "ipv6"
+  ],
+  "homepage": "https://github.com/eduardbcom/lookup-dns-cache",
+  "license": "MIT"
 }
