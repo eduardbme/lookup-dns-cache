@@ -11,9 +11,6 @@ const { HostIpKey, ResolveTask } = require('./internals/');
  * Under the hood, class uses Round-Robin algorithm, so for each request it returns different IP address.
  */
 class IpAddressesTable {
-    /**
-     * @constructor
-     */
     constructor() {
         this._resolveTasks = {};
     }
@@ -49,6 +46,10 @@ class IpAddressesTable {
                     return;
                 }
             }
+
+            if (resolveTask.getStatus() === ResolveTask.STATUS_RESOLVED) {
+                resolveTask.setStatus(ResolveTask.STATUS_UNRESOLVED);
+            }
         } else {
             resolveTask = new ResolveTask(ipVersion);
 
@@ -69,6 +70,7 @@ class IpAddressesTable {
                         .forEach(callback =>
                             setImmediate(() => callback(error))
                         );
+
                     resolveTask.clearAfterResolvedCallbacks();
 
                     return;
@@ -89,6 +91,8 @@ class IpAddressesTable {
                         );
                     }
                 });
+
+                resolveTask.clearAfterResolvedCallbacks();
             });
         }
     }

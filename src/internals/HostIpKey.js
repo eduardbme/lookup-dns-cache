@@ -4,7 +4,6 @@ class HostIpKey {
     /**
      * @param {string} hostname
      * @param {number} ipVersion
-     * @constructor
      */
     constructor(hostname, ipVersion) {
         this._hostname = hostname;

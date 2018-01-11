@@ -41,8 +41,7 @@ class ResolveTask {
     }
 
     /**
-     * @param {number=4,6} ipVersion
-     * @constructor
+     * @param {number} ipVersion=4,6
      */
     constructor(ipVersion) {
         this._status = ResolveTask.STATUS_UNRESOLVED;
@@ -52,16 +51,20 @@ class ResolveTask {
     }
 
     /**
-     * @param {Array[Address]} addresses
+     * @param {Address[]} addresses
      */
     setAddresses(addresses) {
         this._addresses = this._extendAddresses(addresses);
     }
 
     /**
-     * @returns {Array[ExtendedAddress]}
+     * @returns {ExtendedAddress[]}
      */
     getAddresses() {
+        if (this._hasExpiredAddresses()) {
+            return [];
+        }
+
         // here _.cloneDeep copies an array
         // and returns clean version without inner fields that were added by rr method call
         // [ 1, 2, 3, _rr: 0 ] -> [ 1, 2, 3 ]
@@ -69,9 +72,13 @@ class ResolveTask {
     }
 
     /**
-     * @returns {ExtendedAddress}
+     * @returns {ExtendedAddress|undefined}
      */
     getNextAddress() {
+        if (this._hasExpiredAddresses()) {
+            return;
+        }
+
         return rr(this._addresses);
     }
 
@@ -83,7 +90,7 @@ class ResolveTask {
     }
 
     /**
-     * @returns {Array}
+     * @returns {[Function]}
      */
     getAfterResolvedCallbacks() {
         return this._resolvedCallbacks;
@@ -108,8 +115,8 @@ class ResolveTask {
     }
 
     /**
-     * @param {Array[Address]} addresses
-     * @returns {Array[ExtendedAddress]}
+     * @param {Address[]} addresses
+     * @returns {ExtendedAddress[]}
      * @private
      */
     _extendAddresses(addresses) {
@@ -121,6 +128,16 @@ class ResolveTask {
         });
 
         return extendedAddresses;
+    }
+
+    /**
+     * @returns {boolean}
+     * @private
+     */
+    _hasExpiredAddresses() {
+        const currentTime = Date.now();
+
+        return this._addresses.some(record => record.expiredTime <= currentTime);
     }
 }
 
