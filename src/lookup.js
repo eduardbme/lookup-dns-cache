@@ -110,7 +110,8 @@ function _ipv4lookup(hostname, options, callback) {
             // Corner case branch.
             //
             // Intensively calling `lookup` method in parallel can produce situations
-            // when DNS TTL for particular IP has been exhausted, but task queue within NodeJS is full of `resolved` callbacks.
+            // when DNS TTL for particular IP has been exhausted,
+            // but task queue within NodeJS is full of `resolved` callbacks.
             // No way to skip them or update DNS cache before them.
             //
             // So the work around is return undefined for that callbacks and client code should repeat `lookup` call.
@@ -156,7 +157,8 @@ function _ipv6lookup(hostname, options, callback) {
             // Corner case branch.
             //
             // Intensively calling `lookup` method in parallel can produce situations
-            // when DNS TTL for particular IP has been exhausted, but task queue within NodeJS is full of `resolved` callbacks.
+            // when DNS TTL for particular IP has been exhausted,
+            // but task queue within NodeJS is full of `resolved` callbacks.
             // No way to skip them or update DNS cache before them.
             //
             // So the work around is return undefined for that callbacks and client code should repeat `lookup` call.
