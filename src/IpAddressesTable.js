@@ -2,7 +2,12 @@
 
 const _ = require('lodash');
 
-const { HostIpKey, ResolveTask } = require('./internals/');
+const {
+  AddressCache,
+  HostIpKey,
+  ResolveTask,
+  ResolveTasksList
+} = require('./internals/');
 
 /**
  * The main goal behind this class is to eliminate `getaddrinfo()` method call used by `dns.lookup()`.
@@ -12,89 +17,55 @@ const { HostIpKey, ResolveTask } = require('./internals/');
  */
 class IpAddressesTable {
     constructor() {
-        this._resolveTasks = {};
+        this._addressCache = new AddressCache();
+        this._tasks = new ResolveTasksList();
     }
 
     /**
      * @param {string} hostname
-     * @param {number} ipVersion
      * @param {Object} options
      * @param {boolean} options.all
+     * @param {number} options.family
      * @param {Function} callback
      * @public
      */
-    resolve(hostname, ipVersion, options, callback) {
-        const key = new HostIpKey(hostname, ipVersion);
+    resolve(hostname, options, callback) {
+        const key = HostIpKey.generateKey(hostname, options.family);
 
-        let resolveTask = this._resolveTasks[key];
+        if (this._addressCache.has(key)) {
+            const addresses = this._addressCache.get(key);
 
-        if (resolveTask) {
-            if (options.all) {
-                const addresses = resolveTask.getAddresses();
-
-                if (!_.isEmpty(addresses)) {
-                    setImmediate(() => callback(null, addresses));
-
-                    return;
-                }
-            } else {
-                const address = resolveTask.getNextAddress();
-
-                if (address) {
-                    setImmediate(() => callback(null, address));
-
-                    return;
-                }
-            }
-
-            if (resolveTask.getStatus() === ResolveTask.STATUS_RESOLVED) {
-                resolveTask.setStatus(ResolveTask.STATUS_UNRESOLVED);
-            }
-        } else {
-            resolveTask = new ResolveTask(ipVersion);
-
-            this._resolveTasks[key] = resolveTask;
-        }
-
-        resolveTask.addAfterResolvedCallback(callback);
-
-        if (resolveTask.getStatus() === ResolveTask.STATUS_UNRESOLVED) {
-            resolveTask.setStatus(ResolveTask.STATUS_RESOLVING);
-
-            this._resolve(hostname, (error, addresses) => {
-                if (error) {
-                    resolveTask.setStatus(ResolveTask.STATUS_UNRESOLVED);
-
-                    resolveTask
-                        .getAfterResolvedCallbacks()
-                        .forEach(callback =>
-                            setImmediate(() => callback(error))
-                        );
-
-                    resolveTask.clearAfterResolvedCallbacks();
-
-                    return;
-                }
-
-                resolveTask.setStatus(ResolveTask.STATUS_RESOLVED);
-
-                resolveTask.setAddresses(addresses);
-
-                resolveTask.getAfterResolvedCallbacks().forEach(callback => {
-                    if (options.all) {
-                        setImmediate(() =>
-                            callback(null, resolveTask.getAddresses())
-                        );
-                    } else {
-                        setImmediate(() =>
-                            callback(null, resolveTask.getNextAddress())
-                        );
-                    }
-                });
-
-                resolveTask.clearAfterResolvedCallbacks();
+            setImmediate(() => {
+              callback(
+                null,
+                addresses
+              )
             });
+
+            return;
         }
+
+        let task;
+
+        if (this._tasks.has(key)) {
+            task = this._tasks.get(key);
+        } else {
+          task = new ResolveTask(hostname, options.family);
+
+          task.on('done', () => {
+            this._tasks.done(key);
+          });
+
+          task.on('addresses', addresses => {
+            this._addressCache.add(key, addresses);
+          });
+
+          this._tasks.add(key, task);
+
+          task.launch();
+        }
+
+        task.addAfterResovledCallback(callback);
     }
 
     /**

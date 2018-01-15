@@ -3,18 +3,10 @@
 class HostIpKey {
     /**
      * @param {string} hostname
-     * @param {number} ipVersion
+     * @param {number} ipFamily
      */
-    constructor(hostname, ipVersion) {
-        this._hostname = hostname;
-        this._ipVersion = ipVersion;
-    }
-
-    /**
-     * @returns {string}
-     */
-    toString() {
-        return `${this._hostname}_${this._ipVersion}`;
+    static generateKey(hostname, ipFamily) {
+      return `${hostname}_${ipFamily}`;
     }
 }
 

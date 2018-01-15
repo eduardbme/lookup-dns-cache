@@ -1,13 +1,20 @@
 'use strict';
 
+const dns = require('dns');
+
 const _ = require('lodash');
 const async = require('async');
+const rr = require('rr');
 
-const IpV4AddressesTable = require('./IpV4AddressesTable');
-const IpV6AddressesTable = require('./IpV6AddressesTable');
+const IpAddressesTable = require('./IpAddressesTable');
 
-const ipv4AddressesTable = new IpV4AddressesTable();
-const ipv6AddressesTable = new IpV6AddressesTable();
+// const IpV4AddressesTable = require('./IpV4AddressesTable');
+// const IpV6AddressesTable = require('./IpV6AddressesTable');
+//
+// const ipv4AddressesTable = new IpV4AddressesTable();
+// const ipv6AddressesTable = new IpV6AddressesTable();
+
+const ipAddressesTable = new IpAddressesTable();
 
 /**
  * Lookup method that uses IP cache(and DNS TTL) to resolve hostname avoiding system call via thread pool.
@@ -19,16 +26,12 @@ const ipv6AddressesTable = new IpV6AddressesTable();
  * @param {Function} callback
  */
 function lookup(hostname, options, callback) {
-    if (!_.isString(hostname)) {
-        throw new Error('hostname must be a string');
-    }
-
     if (_.isFunction(options)) {
         callback = options;
         options = {};
     } else if (_.isNumber(options)) {
-        options = {family: options};
-    } else if (!_.isObject(options)) {
+        options = { family: options };
+    } else if (!_.isPlainObject(options)) {
         throw new Error('options must be an object or an ip version number');
     }
 
@@ -36,15 +39,35 @@ function lookup(hostname, options, callback) {
         throw new Error('callback param must be a function');
     }
 
-    switch(options.family) {
+    if (!hostname) {
+        if (options.all) {
+            process.nextTick(callback, null, []);
+        } else {
+            process.nextTick(
+                callback,
+                null,
+                null,
+                options.family === 6 ? 6 : 4
+            );
+        }
+
+        return {};
+    }
+
+    if (!_.isString(hostname)) {
+        throw new Error('hostname must be a string');
+    }
+
+    switch (options.family) {
         case 4:
-            return _ipv4lookup(hostname, options, callback);
         case 6:
-            return _ipv6lookup(hostname, options, callback);
+            return _iplookup(hostname, options, callback);
         case undefined:
             return _bothlookups(hostname, options, callback);
         default:
-            throw new Error('invalid family number, must be one of the {4, 6} or undefined');
+            throw new Error(
+                'invalid family number, must be one of the {4, 6} or undefined'
+            );
     }
 }
 
@@ -56,10 +79,10 @@ function lookup(hostname, options, callback) {
  * @param {Function} callback
  * @private
  */
-function _ipv4lookup(hostname, options, callback) {
-    ipv4AddressesTable.resolve(hostname, options, (error, records) => {
+function _iplookup(hostname, options, callback) {
+    ipAddressesTable.resolve(hostname, options, (error, records) => {
         if (error) {
-            if (error.code === 'ENODATA') {
+            if (error.code === dns.NODATA) {
                 const noDataError = makeNotFoundError(hostname, error.syscall);
 
                 return callback(noDataError);
@@ -77,68 +100,23 @@ function _ipv4lookup(hostname, options, callback) {
             // No way to skip them or update DNS cache before them.
             //
             // So the work around is return undefined for that callbacks and client code should repeat `lookup` call.
-            return _ipv4lookup(hostname, options, callback);
+            return _iplookup(hostname, options, callback);
         }
 
-        if (Array.isArray(records)) {
+        if (options.all) {
             const result = records.map(record => {
                 return {
                     address: record.address,
-                    family: record.family
+                    family: options.family
                 };
             });
 
             return callback(null, result);
         }
 
-        return callback(null, records.address, records.family);
-    });
-}
+        const nextRecord = rr(records)
 
-/**
- * @param {string} hostname
- * @param {Object} options
- * @param {number} options.family
- * @param {boolean} options.all
- * @param {Function} callback
- * @private
- */
-function _ipv6lookup(hostname, options, callback) {
-    ipv6AddressesTable.resolve(hostname, options, (error, records) => {
-        if (error) {
-            if (error.code === 'ENODATA') {
-                const noDataError = makeNotFoundError(hostname, error.syscall);
-
-                return callback(noDataError);
-            }
-
-            return callback(error);
-        }
-
-        if (!records) {
-            // Corner case branch.
-            //
-            // Intensively calling `lookup` method in parallel can produce situations
-            // when DNS TTL for particular IP has been exhausted,
-            // but task queue within NodeJS is full of `resolved` callbacks.
-            // No way to skip them or update DNS cache before them.
-            //
-            // So the work around is return undefined for that callbacks and client code should repeat `lookup` call.
-            return _ipv6lookup(hostname, options, callback);
-        }
-
-        if (Array.isArray(records)) {
-            const result = records.map(record => {
-                return {
-                    address: record.address,
-                    family: record.family
-                };
-            });
-
-            return callback(null, result);
-        }
-
-        return callback(null, records.address, records.family);
+        return callback(null, nextRecord.address, options.family);
     });
 }
 
@@ -153,10 +131,10 @@ function _ipv6lookup(hostname, options, callback) {
 function _bothlookups(hostname, options, callback) {
     async.parallel(
         [
-            function (cb) {
-                _ipv4lookup(hostname, options, (error, ...records) => {
+            function(cb) {
+                _iplookup(hostname, Object.assign({}, options, {family: 4}), (error, ...records) => {
                     if (error) {
-                        if (error.code === 'ENOTFOUND') {
+                        if (error.code === dns.NOTFOUND) {
                             return cb(null, []);
                         }
 
@@ -166,10 +144,10 @@ function _bothlookups(hostname, options, callback) {
                     cb(null, ...records);
                 });
             },
-            function (cb) {
-                _ipv6lookup(hostname, options, (error, ...records) => {
+            function(cb) {
+                _iplookup(hostname, Object.assign({}, options, {family: 6}), (error, ...records) => {
                     if (error) {
-                        if (error.code === 'ENOTFOUND') {
+                        if (error.code === dns.NOTFOUND) {
                             return cb(null, []);
                         }
 
@@ -216,7 +194,7 @@ function _bothlookups(hostname, options, callback) {
  * @returns {Error}
  */
 function makeNotFoundError(hostname, syscall) {
-    let errorMessage = `ENOTFOUND ${hostname}`;
+    let errorMessage = `${dns.NOTFOUND} ${hostname}`;
 
     if (syscall) {
         errorMessage = `${syscall} ${errorMessage}`;
@@ -225,8 +203,8 @@ function makeNotFoundError(hostname, syscall) {
     const error = new Error(errorMessage);
 
     error.hostname = hostname;
-    error.code = 'ENOTFOUND';
-    error.errno = 'ENOTFOUND';
+    error.code = dns.NOTFOUND;
+    error.errno = dns.NOTFOUND;
 
     if (syscall) {
         error.syscall = syscall;

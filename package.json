@@ -9,7 +9,9 @@
   "scripts": {
     "prettier": "./node_modules/.bin/prettier --single-quote --tab-width 4 --write \"**/*.js\"",
     "lint": "./node_modules/.bin/eslint ./",
-    "test": "NODE_ENV=test ./node_modules/.bin/mocha --opts tests/mocha.opts -R spec ./tests",
+    "test": "yarn run func-test",
+    "func-test": "NODE_ENV=test ./node_modules/.bin/mocha --opts tests/mocha.opts --timeout 15000 -R spec ./tests/func/**",
+    "unit-test": "NODE_ENV=test ./node_modules/.bin/mocha --opts tests/mocha.opts -R spec ./tests/unit/**",
     "test:coverage": "NODE_ENV=test ./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha --print both -- --opts tests/mocha.opts -R spec ./tests"
   },
   "dependencies": {
