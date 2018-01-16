@@ -1,9 +1,9 @@
 'use strict';
 
-const {AssertionError} = require('assert');
+const { AssertionError } = require('assert');
 
-const {assert} = require('chai');
-const sinon    = require('sinon');
+const { assert } = require('chai');
+const sinon = require('sinon');
 
 const ResolveTask = require('../../../src/ResolveTask');
 
@@ -12,7 +12,7 @@ const addresses = require('../../addresses');
 describe('Unit: ResolveTask::_resolved', () => {
     const error = new Error('error');
 
-    const hostname  = addresses.INET_HOST1;
+    const hostname = addresses.INET_HOST1;
     const ipVersion = 4;
 
     let onAddressesSpy;
@@ -20,11 +20,11 @@ describe('Unit: ResolveTask::_resolved', () => {
 
     beforeEach(() => {
         onAddressesSpy = sinon.spy();
-        onDoneSpy      = sinon.spy();
+        onDoneSpy = sinon.spy();
     });
 
     it(`must correct call callbacks with appropriate error object, IPv${ipVersion} version`, done => {
-        const expectedError     = error;
+        const expectedError = error;
         const expectedAddresses = undefined;
 
         const task = new ResolveTask(hostname, ipVersion);
@@ -45,7 +45,12 @@ describe('Unit: ResolveTask::_resolved', () => {
 
         setImmediate(() => {
             assert.isTrue(resolvedCallback.calledOnce);
-            assert.isTrue(resolvedCallback.calledWithExactly(expectedError, expectedAddresses));
+            assert.isTrue(
+                resolvedCallback.calledWithExactly(
+                    expectedError,
+                    expectedAddresses
+                )
+            );
 
             assert.isTrue(onAddressesSpy.notCalled);
 
@@ -59,7 +64,7 @@ describe('Unit: ResolveTask::_resolved', () => {
         task.on('addresses', onAddressesSpy);
         task.on('done', onDoneSpy);
 
-        const addresses        = [{}];
+        const addresses = [{}];
         const resolvedCallback = sinon.spy();
 
         task._callbacks.push(resolvedCallback);

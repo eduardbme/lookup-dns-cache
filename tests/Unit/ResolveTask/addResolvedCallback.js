@@ -1,14 +1,14 @@
 'use strict';
 
-const {assert} = require('chai');
+const { assert } = require('chai');
 
 const ResolveTask = require('../../../src/ResolveTask');
-const addresses   = require('../../addresses');
+const addresses = require('../../addresses');
 
 describe('Unit: ResolveTask::addResolveCallback', () => {
     let task;
 
-    const hostname  = addresses.INET_HOST1;
+    const hostname = addresses.INET_HOST1;
     const ipVersion = 4;
 
     beforeEach(() => {

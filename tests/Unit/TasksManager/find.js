@@ -1,9 +1,9 @@
 'use strict';
 
-const {assert} = require('chai');
+const { assert } = require('chai');
 
 const TasksManager = require('../../../src/TasksManager');
-const addresses    = require('../../addresses');
+const addresses = require('../../addresses');
 
 describe('Unit: TasksManager::find', () => {
     let tasksManager;
@@ -24,6 +24,5 @@ describe('Unit: TasksManager::find', () => {
         tasksManager._tasks.set(addresses.INET_HOST1, task);
 
         assert.strictEqual(tasksManager.find(addresses.INET_HOST1), task);
-
     });
 });

@@ -8,9 +8,9 @@
  * @property {number} expiredTime - DNS TTL expiration timestamp
  */
 
-const assert         = require('assert');
-const dns            = require('dns');
-const {EventEmitter} = require('events');
+const assert = require('assert');
+const dns = require('dns');
+const { EventEmitter } = require('events');
 
 const _ = require('lodash');
 
@@ -47,9 +47,10 @@ class ResolveTask extends EventEmitter {
         );
 
         this._callbacks = [];
-        this._hostname  = hostname;
+        this._hostname = hostname;
         this._ipVersion = ipVersion;
-        this._resolver  = ipVersion === ResolveTask.IPv4 ? dns.resolve4 : dns.resolve6;
+        this._resolver =
+            ipVersion === ResolveTask.IPv4 ? dns.resolve4 : dns.resolve6;
 
         this._resolved = this._resolved.bind(this);
     }
@@ -62,7 +63,7 @@ class ResolveTask extends EventEmitter {
     }
 
     run() {
-        this._resolver(this._hostname, {ttl: true}, this._resolved);
+        this._resolver(this._hostname, { ttl: true }, this._resolved);
     }
 
     /**
@@ -82,7 +83,7 @@ class ResolveTask extends EventEmitter {
             );
 
             addresses.forEach(address => {
-                address.family      = this._ipVersion;
+                address.family = this._ipVersion;
                 address.expiredTime = Date.now() + address.ttl * 1000;
             });
 

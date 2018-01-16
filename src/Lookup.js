@@ -2,13 +2,13 @@
 
 const dns = require('dns');
 
-const _     = require('lodash');
+const _ = require('lodash');
 const async = require('async');
-const rr    = require('rr');
+const rr = require('rr');
 
 const AddressCache = require('./AddressCache');
 const TasksManager = require('./TasksManager');
-const ResolveTask  = require('./ResolveTask');
+const ResolveTask = require('./ResolveTask');
 
 class Lookup {
     /**
@@ -53,11 +53,13 @@ class Lookup {
     run(hostname, options, callback) {
         if (_.isFunction(options)) {
             callback = options;
-            options  = {};
+            options = {};
         } else if (_.isNumber(options)) {
-            options = {family: options};
+            options = { family: options };
         } else if (!_.isPlainObject(options)) {
-            throw new Error('options must be an object or an ip version number');
+            throw new Error(
+                'options must be an object or an ip version number'
+            );
         }
 
         if (!_.isFunction(callback)) {
@@ -90,7 +92,9 @@ class Lookup {
             case undefined:
                 return this._resolveBoth(hostname, options, callback);
             default:
-                throw new Error('invalid family number, must be one of the {4, 6} or undefined');
+                throw new Error(
+                    'invalid family number, must be one of the {4, 6} or undefined'
+                );
         }
     }
 
@@ -103,14 +107,17 @@ class Lookup {
      * @private
      */
     _resolve(hostname, options, callback) {
-        this._amountOfResolveTries[hostname] = this._amountOfResolveTries[hostname] || 0;
+        this._amountOfResolveTries[hostname] =
+            this._amountOfResolveTries[hostname] || 0;
 
         this._innerResolve(hostname, options.family, (error, records) => {
             if (error) {
                 this._amountOfResolveTries[hostname] = 0;
 
                 if (error.code === dns.NODATA) {
-                    return callback(this._makeNotFoundError(hostname, error.syscall));
+                    return callback(
+                        this._makeNotFoundError(hostname, error.syscall)
+                    );
                 }
 
                 return callback(error);
@@ -125,10 +132,17 @@ class Lookup {
             //
             // So the work around is return undefined for that callbacks and client code should repeat `lookup` call.
             if (!records) {
-                if (this._amountOfResolveTries[hostname] >= Lookup.MAX_AMOUNT_OF_RESOLVE_TRIES) {
+                if (
+                    this._amountOfResolveTries[hostname] >=
+                    Lookup.MAX_AMOUNT_OF_RESOLVE_TRIES
+                ) {
                     this._amountOfResolveTries[hostname] = 0;
 
-                    return callback(new Error(`Cannot resolve host '${hostname}'. Too deep recursion.`));
+                    return callback(
+                        new Error(
+                            `Cannot resolve host '${hostname}'. Too deep recursion.`
+                        )
+                    );
                 }
 
                 this._amountOfResolveTries[hostname] += 1;
@@ -142,7 +156,7 @@ class Lookup {
                 const result = records.map(record => {
                     return {
                         address: record.address,
-                        family:  record.family
+                        family: record.family
                     };
                 });
 
@@ -207,8 +221,14 @@ class Lookup {
     _resolveBoth(hostname, options, callback) {
         async.parallel(
             [
-                this._resolveTaskBuilder(hostname, Object.assign({}, options, {family: Lookup.IPv4})),
-                this._resolveTaskBuilder(hostname, Object.assign({}, options, {family: Lookup.IPv6}))
+                this._resolveTaskBuilder(
+                    hostname,
+                    Object.assign({}, options, { family: Lookup.IPv4 })
+                ),
+                this._resolveTaskBuilder(
+                    hostname,
+                    Object.assign({}, options, { family: Lookup.IPv6 })
+                )
             ],
             (error, records) => {
                 if (error) {
@@ -265,12 +285,13 @@ class Lookup {
      * @returns {Error}
      */
     _makeNotFoundError(hostname, syscall) {
-        const errorMessage = (syscall ? syscall + ' ' : '') + `${dns.NOTFOUND} ${hostname}`;
-        const error        = new Error(errorMessage);
+        const errorMessage =
+            (syscall ? syscall + ' ' : '') + `${dns.NOTFOUND} ${hostname}`;
+        const error = new Error(errorMessage);
 
         error.hostname = hostname;
-        error.code     = dns.NOTFOUND;
-        error.errno    = dns.NOTFOUND;
+        error.code = dns.NOTFOUND;
+        error.errno = dns.NOTFOUND;
 
         if (syscall) {
             error.syscall = syscall;

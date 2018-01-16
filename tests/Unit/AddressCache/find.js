@@ -1,9 +1,9 @@
 'use strict';
 
-const {assert} = require('chai');
+const { assert } = require('chai');
 
 const AddressCache = require('../../../src/AddressCache');
-const addresses    = require('../../addresses');
+const addresses = require('../../addresses');
 
 describe('Unit: AddressCache::find', () => {
     let addressCache;
@@ -21,9 +21,11 @@ describe('Unit: AddressCache::find', () => {
     });
 
     it('must return undefined, cuz there are only expired addresses within cache for particular host', () => {
-        const cachedAddresses = [{
-            expiredTime: Date.now() - 1
-        }];
+        const cachedAddresses = [
+            {
+                expiredTime: Date.now() - 1
+            }
+        ];
 
         addressCache._cache.set(addresses.INET_HOST1, cachedAddresses);
 
