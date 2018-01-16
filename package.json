@@ -1,6 +1,6 @@
 {
   "name": "lookup-dns-cache",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "An implementation to speed up the nodejs `dns.lookup` method by avoiding thread pool and using resolve4/resolve6 with DNS TTL values",
   "main": "index.js",
   "engines": {
@@ -9,7 +9,9 @@
   "scripts": {
     "prettier": "./node_modules/.bin/prettier --single-quote --tab-width 4 --write \"**/*.js\"",
     "lint": "./node_modules/.bin/eslint ./",
-    "test": "NODE_ENV=test ./node_modules/.bin/mocha --opts tests/mocha.opts -R spec ./tests",
+    "test": "yarn run unit-test && yarn run func-test",
+    "unit-test": "NODE_ENV=test ./node_modules/.bin/mocha --opts tests/mocha.opts -R spec ./tests/Unit/**",
+    "func-test": "NODE_ENV=test ./node_modules/.bin/mocha --opts tests/mocha.opts --timeout 15000 -R spec ./tests/Functional/**",
     "test:coverage": "NODE_ENV=test ./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha --print both -- --opts tests/mocha.opts -R spec ./tests"
   },
   "dependencies": {
