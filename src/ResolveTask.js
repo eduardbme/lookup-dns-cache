@@ -77,10 +77,7 @@ class ResolveTask extends EventEmitter {
         assert(this._callbacks.length > 0, 'callbacks array cannot be empty.');
 
         if (!error) {
-            assert(
-                Array.isArray(addresses) && addresses.length > 0,
-                'addresses must be a not empty array.'
-            );
+            assert(Array.isArray(addresses), 'addresses must be an array.');
 
             addresses.forEach(address => {
                 address.family = this._ipVersion;

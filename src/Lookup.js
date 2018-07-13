@@ -162,6 +162,15 @@ class Lookup {
 
                 return callback(null, result);
             } else {
+                if (_.isEmpty(records)) {
+                    const error = this._makeNotFoundError(
+                        hostname,
+                        options.family === 4 ? 'queryA' : 'queryAaaa'
+                    );
+
+                    return callback(error);
+                }
+
                 const record = rr(records);
 
                 return callback(null, record.address, record.family);
