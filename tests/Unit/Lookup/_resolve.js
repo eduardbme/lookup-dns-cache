@@ -25,7 +25,7 @@ describe('Unit: Lookup::_resolve', () => {
         innerResolveStub.restore();
     });
 
-    it('must correct call callback with adjusted error', () => {
+    it('must correct call callback with adjusted error if got NODATA error', () => {
         const expectedErrorMessage = new Error('expected error message');
 
         const expectedNumberOfResolveTriesAfterError = 0;
@@ -62,6 +62,66 @@ describe('Unit: Lookup::_resolve', () => {
             lookup._amountOfResolveTries[hostname],
             expectedNumberOfResolveTriesAfterError
         );
+    });
+
+    const testCases = [
+        {
+            syscall: 'queryA',
+            family: 4
+        },
+        {
+            syscall: 'queryAaaa',
+            family: 6
+        }
+    ];
+
+    testCases.forEach(testCase => {
+        it(`must correct call callback with adjusted NODATA error if got empty result with no error for family - ${
+            testCase.family
+        }`, () => {
+            const expectedErrorMessage = new Error('expected error message');
+            const expectedNumberOfResolveTriesAfterError = 0;
+            const expectedSysCall = testCase.syscall;
+
+            const error = null;
+            const emptyResult = [];
+
+            const callbackStub = sinon.stub();
+
+            makeNotFoundErrorStub = sinon
+                .stub(Lookup.prototype, '_makeNotFoundError')
+                .returns(expectedErrorMessage);
+            innerResolveStub = sinon
+                .stub(Lookup.prototype, '_innerResolve')
+                .callsFake((hostname, family, callback) => {
+                    callback(error, emptyResult);
+                });
+
+            lookup._resolve(
+                hostname,
+                { family: testCase.family },
+                callbackStub
+            );
+
+            assert.isTrue(callbackStub.calledOnce);
+            assert.strictEqual(
+                callbackStub.getCall(0).args[0],
+                expectedErrorMessage
+            );
+
+            assert.isTrue(makeNotFoundErrorStub.calledOnce);
+            assert.isTrue(
+                makeNotFoundErrorStub.calledWithExactly(
+                    hostname,
+                    expectedSysCall
+                )
+            );
+
+            assert.strictEqual(
+                lookup._amountOfResolveTries[hostname],
+                expectedNumberOfResolveTriesAfterError
+            );
+        });
     });
 
     it('must correct call callback with original error', () => {

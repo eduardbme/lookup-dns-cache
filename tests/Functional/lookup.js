@@ -266,31 +266,264 @@ describe('must correct lookup for all IPv4 and IPv6 addresses', () => {
 describe('must correct lookup for one IPv4/IPv6 address', () => {
     const testCases = [
         {
+            host: addresses.INET_HOST1,
             title: 'must correct lookup IPv4 address',
             family: 4,
             expectedAddressIp: net.isIPv4,
-            expectedIpFamily: 4
+            expectedIpFamily: 4,
+            checkResult(done, err, address, family) {
+                assert.ifError(err);
+
+                assert.isTrue(this.expectedAddressIp(address));
+                assert.strictEqual(this.expectedIpFamily, family);
+
+                done();
+            }
         },
         {
+            host: addresses.INET_HOST1,
             title: 'must correct lookup IPv6 address',
             family: 6,
             expectedAddressIp: net.isIPv6,
-            expectedIpFamily: 6
+            expectedIpFamily: 6,
+            checkResult(done, err, address, family) {
+                assert.ifError(err);
+
+                assert.isTrue(this.expectedAddressIp(address));
+                assert.strictEqual(this.expectedIpFamily, family);
+
+                done();
+            }
+        },
+        {
+            host: addresses.INET_HOST2,
+            title: 'must correct lookup IPv4 address',
+            family: 4,
+            expectedAddressIp: net.isIPv4,
+            expectedIpFamily: 4,
+            checkResult(done, err, address, family) {
+                assert.ifError(err);
+
+                assert.isTrue(this.expectedAddressIp(address));
+                assert.strictEqual(this.expectedIpFamily, family);
+
+                done();
+            }
+        },
+        {
+            host: addresses.INET_HOST2,
+            title: 'must correct lookup IPv6 address',
+            family: 6,
+            expectedAddressIp: net.isIPv6,
+            expectedIpFamily: 6,
+            checkResult(done, err, address, family) {
+                assert.ifError(err);
+
+                assert.isTrue(this.expectedAddressIp(address));
+                assert.strictEqual(this.expectedIpFamily, family);
+
+                done();
+            }
+        },
+        {
+            host: addresses.INET_HOST3,
+            title: 'must correct lookup IPv4 address',
+            family: 4,
+            expectedAddressIp: net.isIPv4,
+            expectedIpFamily: 4,
+            checkResult(done, err, address, family) {
+                assert.ifError(err);
+
+                assert.isTrue(this.expectedAddressIp(address));
+                assert.strictEqual(this.expectedIpFamily, family);
+
+                done();
+            }
+        },
+        {
+            host: addresses.WWWINET_HOST3,
+            title: 'must correct lookup IPv4 address',
+            family: 4,
+            expectedAddressIp: net.isIPv4,
+            expectedIpFamily: 4,
+            checkResult(done, err, address, family) {
+                assert.ifError(err);
+
+                assert.isTrue(this.expectedAddressIp(address));
+                assert.strictEqual(this.expectedIpFamily, family);
+
+                done();
+            }
+        },
+        {
+            host: addresses.INET_HOST3,
+            title: 'must correct notify that no IPv6 address was found',
+            family: 6,
+            expectedAddressIp: net.isIPv4,
+            expectedIpFamily: 4,
+            checkResult(done, err, address, family) {
+                const expectedSysCall = 'queryAaaa';
+                const expectedCode = 'ENOTFOUND';
+                const expectedErrNo = 'ENOTFOUND';
+                const expectedHostName = this.host;
+
+                const expectedMessage = `${expectedSysCall} ${expectedErrNo} ${expectedHostName}`;
+
+                assert.instanceOf(err, Error);
+
+                assert.strictEqual(err.message, expectedMessage);
+                assert.strictEqual(err.syscall, expectedSysCall);
+                assert.strictEqual(err.code, expectedCode);
+                assert.strictEqual(err.errno, expectedErrNo);
+                assert.strictEqual(err.hostname, expectedHostName);
+
+                assert.isUndefined(address);
+                assert.isUndefined(family);
+
+                done();
+            }
+        },
+        {
+            host: addresses.WWWINET_HOST3,
+            title: 'must correct notify that no IPv6 address was found',
+            family: 6,
+            expectedAddressIp: net.isIPv4,
+            expectedIpFamily: 4,
+            checkResult(done, err, address, family) {
+                const expectedSysCall = 'queryAaaa';
+                const expectedCode = 'ENOTFOUND';
+                const expectedErrNo = 'ENOTFOUND';
+                const expectedHostName = this.host;
+
+                const expectedMessage = `${expectedSysCall} ${expectedErrNo} ${expectedHostName}`;
+
+                assert.instanceOf(err, Error);
+
+                assert.strictEqual(err.message, expectedMessage);
+                assert.strictEqual(err.syscall, expectedSysCall);
+                assert.strictEqual(err.code, expectedCode);
+                assert.strictEqual(err.errno, expectedErrNo);
+                assert.strictEqual(err.hostname, expectedHostName);
+
+                assert.isUndefined(address);
+                assert.isUndefined(family);
+
+                done();
+            }
         }
     ];
 
     testCases.forEach(testCase => {
-        it(testCase.title, done => {
+        it(`${testCase.title} - ${testCase.host}`, done => {
             lookup(
-                addresses.INET_HOST1,
+                testCase.host,
                 { family: testCase.family },
-                (err, address, family) => {
-                    assert.ifError(err);
+                testCase.checkResult.bind(testCase, done)
+            );
+        });
+    });
+});
 
-                    assert.isTrue(testCase.expectedAddressIp(address));
-                    assert.strictEqual(testCase.expectedIpFamily, family);
+describe('must behaves like dns.lookup method', () => {
+    const testCases = [
+        {
+            host: addresses.INET_HOST1,
+            title: 'must correct lookup IPv4 address',
+            options: { family: 4 }
+        },
+        {
+            host: addresses.INET_HOST1,
+            title: 'must correct lookup IPv6 address',
+            options: { family: 6 }
+        },
+        {
+            host: addresses.INET_HOST2,
+            title: 'must correct lookup IPv4 address',
+            options: { family: 4 }
+        },
+        {
+            host: addresses.INET_HOST2,
+            title: 'must correct lookup IPv6 address',
+            options: { family: 6 }
+        },
+        {
+            host: addresses.INET_HOST3,
+            title: 'must correct lookup IPv4 address',
+            options: { family: 4 }
+        },
+        {
+            host: addresses.WWWINET_HOST3,
+            title: 'must correct lookup IPv4 address',
+            options: { family: 4 }
+        },
+        {
+            host: addresses.INET_HOST3,
+            title: 'must correct notify that no IPv6 address was found',
+            options: { family: 6 }
+        },
+        {
+            host: addresses.WWWINET_HOST3,
+            title: 'must correct notify that no IPv6 address was found',
+            options: { family: 6 }
+        },
+        {
+            host: addresses.INET_HOST3,
+            title: 'must correct lookup all IPv4 and IPv6 adresses',
+            options: { all: true }
+        },
+        {
+            host: addresses.WWWINET_HOST3,
+            title: 'must correct lookup all IPv4 and IPv6 adresses',
+            options: { all: true }
+        },
+        {
+            host: addresses.INET_HOST3,
+            title: 'must correct lookup all IPv4 and IPv6 adresses',
+            options: { all: true }
+        },
+        {
+            host: addresses.WWWINET_HOST3,
+            title: 'must correct lookup all IPv4 and IPv6 adresses',
+            options: { all: true }
+        }
+    ];
 
-                    done();
+    testCases.forEach(testCase => {
+        it(`${testCase.title} - ${testCase.host}`, done => {
+            dns.lookup(
+                testCase.host,
+                testCase.options,
+                (errDnsLookup, addressesDnsLookup, familyDnsLookup) => {
+                    lookup(
+                        testCase.host,
+                        testCase.options,
+                        (errLookup, addressesLookup, familyLookup) => {
+                            if (errDnsLookup) {
+                                assert.instanceOf(errLookup, Error);
+
+                                assert.strictEqual(
+                                    addressesDnsLookup,
+                                    addressesLookup
+                                );
+                                assert.strictEqual(
+                                    familyDnsLookup,
+                                    familyLookup
+                                );
+
+                                return done();
+                            }
+
+                            assert.isDefined(addressesLookup);
+
+                            assert.strictEqual(
+                                typeof addressesLookup,
+                                typeof addressesDnsLookup
+                            );
+                            assert.strictEqual(familyLookup, familyDnsLookup);
+
+                            done();
+                        }
+                    );
                 }
             );
         });
